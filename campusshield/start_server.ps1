@@ -4,7 +4,7 @@
 param(
     [switch]$SkipBrowser = $false,
     [int]$Port = 8000,
-    [string]$BindHost = "127.0.0.1"  # avoid readonly automatic variable 'Host'
+    [string]$BindAddress = "127.0.0.1"  # avoid readonly automatic variable 'Host'
 )
 
 Write-Host "`n╔════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
@@ -55,8 +55,8 @@ Write-Host "`n╔═════════════════════
 Write-Host "║     🚀 Starting Django Development Server                  ║" -ForegroundColor Green
 Write-Host "╚════════════════════════════════════════════════════════════╝`n" -ForegroundColor Green
 
-Write-Host "Server URL: http://${BindHost}:${Port}" -ForegroundColor Cyan
+Write-Host "Server URL: http://${BindAddress}:${Port}" -ForegroundColor Cyan
 Write-Host "Press CTRL+C to stop the server`n" -ForegroundColor Yellow
 
 # Start the server
-python manage.py runserver "${BindHost}:${Port}"
+python manage.py runserver "${BindAddress}:${Port}"

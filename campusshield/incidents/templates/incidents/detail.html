@@ -368,7 +368,7 @@
                         <span>{{ ai_analysis.anomaly_score }}%</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: {{ ai_analysis.anomaly_score }}%"></div>
+                        <div class="progress-fill" id="anomaly-bar"></div>
                     </div>
                 </div>
 
@@ -378,9 +378,13 @@
                         <span>{{ ai_analysis.risk_score }}%</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: {{ ai_analysis.risk_score }}%"></div>
+                        <div class="progress-fill" id="risk-bar"></div>
                     </div>
                 </div>
+                <script>
+                    document.getElementById('anomaly-bar').style.width = '{{ ai_analysis.anomaly_score }}%';
+                    document.getElementById('risk-bar').style.width = '{{ ai_analysis.risk_score }}%';
+                </script>
             </div>
         {% endif %}
 
