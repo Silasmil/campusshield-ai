@@ -81,13 +81,63 @@ run_server.bat
 ## ✅ System Check Results
 
 ```
-System check: ✅ Identified no issues (0 silenced)
-AI Modules: ✅ Loaded successfully
-AI Models: ✅ Initialized successfully
-Database: ✅ SQLite (db.sqlite3)
-Debug Mode: ✅ Enabled for development
-HTTPS: ✅ Disabled in development (prevents SSL errors)
+======================================================================
+             CampusShield AI - Comprehensive System Check
+======================================================================
+
+🔍 MODULE IMPORT CHECKS
+----------------------------------------------------------------------
+✅ incidents.models - OK
+✅ AI modules loaded successfully
+✅ AI models initialized successfully
+✅ incidents.views - OK
+✅ ai_engine.anomaly_detector - OK
+✅ ai_engine.threat_classifier - OK
+✅ django.contrib.auth - OK
+
+📊 DATABASE INTEGRITY CHECKS
+----------------------------------------------------------------------
+✅ Total users: 3
+✅ Total incidents: 7
+✅ Admin user exists: YES
+   - Superuser: True
+   - Staff: True
+   - Active: True
+
+📋 MODEL VALIDATION
+----------------------------------------------------------------------
+✅ Incident model accessible: 7 records
+   - Sample incident: Ransomeware
+   - Severity: 4
+   - Status: investigating
+
+🤖 AI MODULE CHECKS
+----------------------------------------------------------------------
+✅ AnomalyDetector initialized
+   - Trained: False
+✅ ThreatClassifier initialized
+   - Trained: False
+
+⚙️  SETTINGS VALIDATION
+----------------------------------------------------------------------
+✅ DEBUG: False
+✅ ALLOWED_HOSTS: ['localhost', '127.0.0.1', '*.localhost']
+✅ Database: django.db.backends.sqlite3
+✅ INSTALLED_APPS: 7 apps
+
+🌐 URL CONFIGURATION
+----------------------------------------------------------------------
+✅ URL patterns configured: 10 routes
+✅ password_change URL: /accounts/password_change/
+✅ login URL: /accounts/login/
+✅ dashboard URL: /
+
+======================================================================
+✅ SYSTEM CHECK COMPLETE - All systems operational!
+======================================================================
 ```
+
+(Use `python system_check.py` from an active virtual environment to regenerate this report.)
 
 ---
 
@@ -198,6 +248,170 @@ python manage.py createsuperuser
 python manage.py collectstatic
 
 # Access Django shell
+``` 
+
+---
+
+## 🛠 Full Tech Stack Setup & Configuration Guide
+
+This section provides step‑by‑step instructions for installing and configuring the key technologies used by CampusShield AI.  Copy/paste commands are provided for Windows PowerShell but the same tools can be installed on macOS/Linux.
+
+### 1. Python & Virtual Environment
+```powershell
+# 1.1 Install Python 3.14 from python.org or via package manager
+python --version   # should report 3.14.x
+
+# 1.2 Create a virtual environment in the project root
+cd c:\Development\campusshield-ai
+default python -m venv venv
+
+# 1.3 Activate the environment
+#   Windows PowerShell:
+.\venv\Scripts\Activate.ps1
+#   cmd.exe:
+venv\Scripts\activate.bat
+#   macOS/Linux:
+# source venv/bin/activate
+
+# 1.4 Upgrade pip and install dependencies
+python -m pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+# for production:
+pip install -r requirements-production.txt
+```
+
+### 2. Django Project Configuration
+```powershell
+cd campusshield
+# create secret key (use once)
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+# copy into .env.development or .env.production as appropriate
+
+# apply migrations for development
+python manage.py migrate
+
+# create superuser for admin interface
+python manage.py createsuperuser
+```
+
+Edit `campusshield/settings.py` or set environment variables according to `.env.production.example`:
+- `DEBUG=True` for dev, `False` for production
+- `ALLOWED_HOSTS` list of hostnames
+- `DATABASE_URL` (see PostgreSQL section)
+- `DJANGO_SECRET_KEY` (generated above)
+
+### 3. Database (PostgreSQL)
+```powershell
+# install PostgreSQL (Windows installer or package manager)
+# create database and user
+psql -U postgres -c "CREATE DATABASE campusshield;"
+psql -U postgres -c "CREATE USER cs_user WITH PASSWORD 'strongpassword';"
+psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE campusshield TO cs_user;"
+
+# example DATABASE_URL
+# postgresql://cs_user:strongpassword@localhost:5432/campusshield
+# set in environment or .env.production
+```
+Run migrations again after configuring `DATABASE_URL`:
+```powershell
+python manage.py migrate
+```
+
+### 4. Caching/Session Backend (Redis)
+```powershell
+# install Redis server
+# on Windows use wsl or third‑party ports
+
+# set REDIS_URL environment variable, e.g.:
+# redis://localhost:6379/0
+```
+Django cache backend configuration is optionally controlled in `settings.py` (see `CACHES` section).
+
+### 5. Gunicorn (Production WSGI)
+```powershell
+pip install gunicorn
+# test run
+cd campusshield
+gunicorn campusshield.wsgi_production:application --bind 0.0.0.0:8000
+```
+Use the provided systemd service file (see PRODUCTION_DEPLOYMENT.md) to run as a background service.
+
+### 6. Nginx Reverse Proxy (TLS + Headers)
+- Install Nginx
+- Use the sample configuration from `PRODUCTION_DEPLOYMENT.md`
+- Place SSL certificate/key paths in `nginx.conf` or environment
+
+### 7. SSL Certificates
+```powershell
+# with certbot (Let's Encrypt)
+certbot certonly --standalone -d yourdomain.com
+# certificates will be located under /etc/letsencrypt/live/yourdomain.com/
+```
+Update `SSL_CERTIFICATE_PATH` and `SSL_KEY_PATH` in your environment files.
+
+### 8. Running the Server
+
+a) **Development**
+```powershell
+# activate venv, then
+cd campusshield
+python manage.py runserver 127.0.0.1:8000
+# or use startup script
+.\start_server.ps1
+```
+
+b) **HTTPS development (self-signed)**
+```powershell
+python run_https.py
+```
+
+c) **Production (gunicorn + nginx)**
+1. Start gunicorn via systemd or command line
+2. Configure Nginx as reverse proxy
+3. Ensure environment variables are loaded
+```
+
+### 9. Running the System Check
+To verify the installation and application health:
+```powershell
+# make sure environment is active and DATABASE_URL points to your DB
+cd campusshield
+python system_check.py
+```
+If you encounter the "did not find executable" error when launching, recreate the virtual environment with a valid base Python installation:
+```powershell
+# recreate venv if necessary
+cd ..
+python -m venv --clear venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+The system check reports module imports, database counts, admin user existence, AI module initialization, URL patterns, and settings values. Use it after each significant change.
+
+### 10. Other Useful Commands
+```powershell
+# run tests
+python manage.py test
+
+# dump database for backup
+python manage.py dumpdata > backup.json
+
+# open interactive shell with Django context
+python manage.py shell
+
+# install new dependency and freeze
+pip install <package>
+pip freeze > requirements.txt
+```
+
+---
+
+By following the above steps you will have a fully configured CampusShield AI development or production environment.  Refer back to this document anytime you need to rebuild or troubleshoot your stack.
+
+---
+
+
 python manage.py shell
 ```
 
