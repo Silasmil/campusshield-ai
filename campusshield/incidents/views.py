@@ -1,8 +1,11 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db.models import Q
 from .models import Incident
+from .forms import IncidentReportForm, IncidentUpdateForm
 import json
 import traceback
 
@@ -204,3 +207,161 @@ def incident_analysis(request, incident_id):
             'anomaly_score': getattr(incident, 'anomaly_score', 0.0),
             'risk_score': getattr(incident, 'risk_score', incident.calculate_risk())
         })
+
+
+# User-facing incident reporting views
+
+@login_required
+def report_incident(request):
+    """Allow users to report a new incident"""
+    if request.method == 'POST':
+        form = IncidentReportForm(request.POST)
+        if form.is_valid():
+            incident = form.save(commit=False)
+            incident.reported_by = request.user
+            incident.status = 'new'
+            incident.save()
+            
+            messages.success(
+                request,
+                f"✅ Incident '{incident.title}' reported successfully! Incident ID: {incident.id}"
+            )
+            return redirect('incident_detail', incident_id=incident.id)
+    else:
+        form = IncidentReportForm()
+    
+    context = {
+        'form': form,
+        'title': 'Report an Incident'
+    }
+    return render(request, 'incidents/report.html', context)
+
+
+@login_required
+def my_incidents(request):
+    """Show incidents reported by the current user"""
+    # Get all incidents reported by this user
+    user_incidents = Incident.objects.filter(
+        reported_by=request.user
+    ).order_by('-detected_at')
+    
+    # Get statistics for this user's incidents
+    total_reported = user_incidents.count()
+    resolved_count = user_incidents.filter(resolved=True).count()
+    pending_count = user_incidents.filter(resolved=False).count()
+    
+    context = {
+        'incidents': user_incidents,
+        'total_reported': total_reported,
+        'resolved_count': resolved_count,
+        'pending_count': pending_count,
+        'page_title': 'My Reported Incidents'
+    }
+    return render(request, 'incidents/my_incidents.html', context)
+
+
+@login_required
+def incident_detail(request, incident_id):
+    """Show detailed view of a single incident"""
+    incident = get_object_or_404(Incident, id=incident_id)
+    
+    # Check if user can view this incident (reporter or admin)
+    if incident.reported_by != request.user and not request.user.is_staff:
+        messages.error(request, '❌ You do not have permission to view this incident.')
+        return redirect('my_incidents')
+    
+    # Handle status updates
+    if request.method == 'POST' and (request.user.is_staff or incident.reported_by == request.user):
+        form = IncidentUpdateForm(request.POST, instance=incident)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '✅ Incident updated successfully!')
+            return redirect('incident_detail', incident_id=incident.id)
+    else:
+        form = IncidentUpdateForm(instance=incident)
+    
+    # Get AI analysis if available
+    ai_analysis = None
+    if AI_AVAILABLE:
+        try:
+            predicted_type, confidence = threat_classifier.predict(incident)
+            ai_analysis = {
+                'predicted_type': predicted_type,
+                'prediction_confidence': round(confidence * 100, 1),
+                'anomaly_score': round(incident.anomaly_score * 100, 1),
+                'risk_score': round(incident.risk_score * 100, 1),
+                'is_anomalous': incident.anomaly_score > 0.7,
+                'risk_level': 'High' if incident.risk_score > 0.7 else 'Medium' if incident.risk_score > 0.4 else 'Low',
+            }
+        except Exception as e:
+            print(f"Error in AI analysis: {e}")
+    
+    context = {
+        'incident': incident,
+        'form': form,
+        'is_reporter': incident.reported_by == request.user,
+        'is_staff': request.user.is_staff,
+        'ai_analysis': ai_analysis,
+        'status_choices': Incident.STATUS_CHOICES,
+    }
+    return render(request, 'incidents/detail.html', context)
+
+
+@login_required
+def incident_tracking(request):
+    """Dashboard showing all incidents with filtering and tracking"""
+    # Start with incidents the user can see
+    if request.user.is_staff:
+        # Admin sees all incidents
+        incidents = Incident.objects.all()
+    else:
+        # Regular users see only their reported incidents
+        incidents = Incident.objects.filter(reported_by=request.user)
+    
+    # Apply filters
+    incident_type = request.GET.get('type', '')
+    status = request.GET.get('status', '')
+    severity = request.GET.get('severity', '')
+    resolved = request.GET.get('resolved', '')
+    
+    if incident_type:
+        incidents = incidents.filter(incident_type=incident_type)
+    if status:
+        incidents = incidents.filter(status=status)
+    if severity:
+        incidents = incidents.filter(severity=int(severity))
+    if resolved == 'true':
+        incidents = incidents.filter(resolved=True)
+    elif resolved == 'false':
+        incidents = incidents.filter(resolved=False)
+    
+    # Order by most recent
+    incidents = incidents.order_by('-detected_at')
+    
+    # Calculate statistics
+    total_incidents = Incident.objects.all().count() if request.user.is_staff else incidents.count()
+    user_total = Incident.objects.filter(reported_by=request.user).count()
+    user_resolved = Incident.objects.filter(reported_by=request.user, resolved=True).count()
+    user_pending = Incident.objects.filter(reported_by=request.user, resolved=False).count()
+    
+    # Get unique values for filter dropdowns
+    incident_types = Incident.objects.values_list('incident_type', flat=True).distinct()
+    statuses = Incident.STATUS_CHOICES
+    severities = Incident.SEVERITY_LEVELS
+    
+    context = {
+        'incidents': incidents,
+        'total_incidents': total_incidents,
+        'user_total': user_total,
+        'user_resolved': user_resolved,
+        'user_pending': user_pending,
+        'incident_types': incident_types,
+        'statuses': statuses,
+        'severities': severities,
+        'is_staff': request.user.is_staff,
+        'selected_type': incident_type,
+        'selected_status': status,
+        'selected_severity': severity,
+        'selected_resolved': resolved,
+    }
+    return render(request, 'incidents/tracking.html', context)

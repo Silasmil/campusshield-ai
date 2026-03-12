@@ -237,6 +237,10 @@ campusshield-ai/
 ```powershell
 # Check Django status
 python manage.py check
+```
+
+> **Editor diagnostics:** If Pylance flags missing `django` imports or shows errors about modules not being found, make sure VS Code is using the project's virtual environment interpreter (`.venv/Scripts/python.exe` or `venv_new`).  Open the command palette (`Ctrl+Shift+P`), choose **Python: Select Interpreter**, and pick the correct virtualenv; the warnings should disappear once the environment is active.
+
 
 # Run database migrations
 python manage.py migrate

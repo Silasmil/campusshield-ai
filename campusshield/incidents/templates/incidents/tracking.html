@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Tracking - CampusShield AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            color: #2c3e50;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            border-top: 4px solid #667eea;
+        }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 13px;
+        }
+        .filters-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .filters-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #2c3e50;
+        }
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .btn-apply {
+            background: #667eea;
+            color: white;
+        }
+        .btn-apply:hover {
+            background: #764ba2;
+        }
+        .btn-reset {
+            background: #ecf0f1;
+            color: #333;
+        }
+        .btn-reset:hover {
+            background: #bdc3c7;
+        }
+        .incidents-list {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .incidents-header {
+            background: #ecf0f1;
+            padding: 20px;
+            border-bottom: 2px solid #bdc3c7;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            gap: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+        .incident-row {
+            padding: 20px;
+            border-bottom: 1px solid #ecf0f1;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            gap: 20px;
+            align-items: center;
+            transition: background 0.3s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .incident-row:hover {
+            background: #f8f9fa;
+        }
+        .incident-title {
+            font-weight: 600;
+            color: #2c3e50;
+            cursor: pointer;
+        }
+        .incident-title:hover {
+            color: #667eea;
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+        }
+        .severity-1 { background: #c0392b; }
+        .severity-2 { background: #e74c3c; }
+        .severity-3 { background: #f39c12; }
+        .severity-4 { background: #27ae60; }
+        .severity-5 { background: #3498db; }
+        .status-new { background: #1976d2; }
+        .status-investigating { background: #f77f00; }
+        .status-contained { background: #7b1fa2; }
+        .status-resolved { background: #388e3c; }
+        .status-false_positive { background: #c2185b; }
+        .date-small {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .staff-indicator {
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 1000px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .filters-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .incidents-header,
+            .incident-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Incident Tracking Dashboard</h1>
+        </div>
+
+        {% if is_staff %}
+            <div class="staff-indicator">
+                👮 You are viewing as a staff member. You can see all incidents in the system.
+            </div>
+        {% endif %}
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_incidents }}</div>
+                <div class="stat-label">Total Incidents</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ user_total }}</div>
+                <div class="stat-label">Your Reports</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ user_resolved }}</div>
+                <div class="stat-label">Your Resolved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ user_pending }}</div>
+                <div class="stat-label">Your Pending</div>
+            </div>
+        </div>
+
+        <div class="filters-container">
+            <div class="filters-title">🔍 Filter Incidents</div>
+            <form method="get" id="filter-form">
+                <div class="filters-grid">
+                    <div>
+                        <label for="type-filter" style="display: block; margin-bottom: 5px; font-size: 12px; color: #7f8c8d;">Type</label>
+                        <select name="type" id="type-filter">
+                            <option value="">All Types</option>
+                            {% for type in incident_types %}
+                                <option value="{{ type }}" {% if type == selected_type %}selected{% endif %}>{{ type|title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="status-filter" style="display: block; margin-bottom: 5px; font-size: 12px; color: #7f8c8d;">Status</label>
+                        <select name="status" id="status-filter">
+                            <option value="">All Statuses</option>
+                            {% for value, label in statuses %}
+                                <option value="{{ value }}" {% if value == selected_status %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="severity-filter" style="display: block; margin-bottom: 5px; font-size: 12px; color: #7f8c8d;">Severity</label>
+                        <select name="severity" id="severity-filter">
+                            <option value="">All Severities</option>
+                            {% for value, label in severities %}
+                                <option value="{{ value }}" {% if value|stringformat:"s" == selected_severity %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="resolved-filter" style="display: block; margin-bottom: 5px; font-size: 12px; color: #7f8c8d;">Resolution</label>
+                        <select name="resolved" id="resolved-filter">
+                            <option value="">All</option>
+                            <option value="true" {% if selected_resolved == "true" %}selected{% endif %}>Resolved Only</option>
+                            <option value="false" {% if selected_resolved == "false" %}selected{% endif %}>Pending Only</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-buttons">
+                    <button type="submit" class="btn btn-apply">🔍 Apply Filters</button>
+                    <a href="?", class="btn btn-reset" style="text-decoration: none; display: flex; align-items: center;">Reset</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="incidents-list">
+            {% if incidents %}
+                <div class="incidents-header">
+                    <div>Incident</div>
+                    <div>Severity</div>
+                    <div>Status</div>
+                    <div>Type</div>
+                    <div>Reported</div>
+                </div>
+                {% for incident in incidents %}
+                    <a href="{% url 'incident_detail' incident.id %}" class="incident-row" style="text-decoration: none; color: inherit;">
+                        <div class="incident-title">{{ incident.title }}</div>
+                        <div>
+                            <span class="badge severity-{{ incident.severity }}">
+                                {{ incident.get_severity_display }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="badge status-{{ incident.status }}">
+                                {{ incident.get_status_display }}
+                            </span>
+                        </div>
+                        <div>{{ incident.get_incident_type_display }}</div>
+                        <div>
+                            <div>{{ incident.detected_at|date:"M d, Y" }}</div>
+                            <div class="date-small">{{ incident.detected_at|time:"H:i" }}</div>
+                        </div>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <h3>No incidents match your search</h3>
+                    <p>Try adjusting your filters or <a href="{% url 'report_incident' %}" style="color: #667eea;">report a new incident</a>.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

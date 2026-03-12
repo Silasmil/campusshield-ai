@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report an Incident - CampusShield AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .form-container {
+            padding: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.2);
+        }
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #ecf0f1;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #bdc3c7;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .field-group {
+            min-height: 80px;
+        }
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚨 Report an Incident</h1>
+            <p>Help us identify and track security incidents in real-time</p>
+        </div>
+
+        <div class="form-container">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %}">
+                        {% if 'success' in message.tags %}<span>✅</span>{% elif 'error' in message.tags %}<span>❌</span>{% else %}<span>ℹ️</span>{% endif %}
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <!-- Title -->
+                <div class="form-group">
+                    <label for="id_title" class="required">Incident Title</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <div class="alert alert-error">{{ form.title.errors }}</div>
+                    {% endif %}
+                    <div class="help-text">Brief summary of the incident (e.g., "Suspicious login attempts from China")</div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="id_description" class="required">Detailed Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="alert alert-error">{{ form.description.errors }}</div>
+                    {% endif %}
+                    <div class="help-text">Provide as much detail as possible about what happened and when</div>
+                </div>
+
+                <!-- Type and Severity -->
+                <div class="form-row">
+                    <div class="field-group">
+                        <label for="id_incident_type" class="required">Incident Type</label>
+                        {{ form.incident_type }}
+                        {% if form.incident_type.errors %}
+                            <div class="alert alert-error">{{ form.incident_type.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="field-group">
+                        <label for="id_severity" class="required">Severity Level</label>
+                        {{ form.severity }}
+                        {% if form.severity.errors %}
+                            <div class="alert alert-error">{{ form.severity.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Source IP -->
+                <div class="form-group">
+                    <label for="id_source_ip">Source IP Address</label>
+                    {{ form.source_ip }}
+                    {% if form.source_ip.errors %}
+                        <div class="alert alert-error">{{ form.source_ip.errors }}</div>
+                    {% endif %}
+                    <div class="help-text">IP address of the source if known (optional)</div>
+                </div>
+
+                <!-- Target System -->
+                <div class="form-group">
+                    <label for="id_target_system">Target System/Server</label>
+                    {{ form.target_system }}
+                    {% if form.target_system.errors %}
+                        <div class="alert alert-error">{{ form.target_system.errors }}</div>
+                    {% endif %}
+                    <div class="help-text">Name or IP of the system targeted (optional)</div>
+                </div>
+
+                <!-- Affected Assets -->
+                <div class="form-group">
+                    <label for="id_affected_assets">Affected Assets</label>
+                    {{ form.affected_assets }}
+                    {% if form.affected_assets.errors %}
+                        <div class="alert alert-error">{{ form.affected_assets.errors }}</div>
+                    {% endif %}
+                    <div class="help-text">List of affected systems, users, or data (optional)</div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">📤 Submit Report</button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-secondary" style="text-decoration: none; display: flex; align-items: center; justify-content: center;">Cancel</a>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: #f0f3ff; border-radius: 5px; border-left: 4px solid #667eea;">
+                    <p style="margin: 0; font-size: 13px; color: #333;">
+                        <strong>ℹ️ Info:</strong> Your report will be timestamped automatically and linked to your account. 
+                        You'll be able to track the status and any updates from the security team.
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

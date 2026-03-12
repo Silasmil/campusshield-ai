@@ -23,7 +23,9 @@ from django.contrib.auth import views as auth_views
 from incidents.views import (
     incidents_list, incidents_dashboard,
     analyze_incident, train_ai_models,
-    incident_analysis
+    incident_analysis, report_incident,
+    my_incidents, incident_detail,
+    incident_tracking
 )
 
 urlpatterns = [
@@ -41,6 +43,12 @@ urlpatterns = [
     path('api/incidents/<int:incident_id>/analyze/', analyze_incident),
     path('api/incidents/<int:incident_id>/analysis/', incident_analysis),
     path('api/train-models/', train_ai_models),
+
+    # User incident reporting
+    path('report/', report_incident, name='report_incident'),
+    path('my-incidents/', my_incidents, name='my_incidents'),
+    path('incidents/<int:incident_id>/', incident_detail, name='incident_detail'),
+    path('tracking/', incident_tracking, name='incident_tracking'),
 
     # Dashboard
     path('', incidents_dashboard, name='dashboard'),

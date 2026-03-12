@@ -123,7 +123,12 @@
 <body>
     <div class="header">
         <h1>🛡️ CampusShield AI</h1>
-        <p>Simple Cybersecurity Dashboard</p>
+        <p>Cybersecurity Incident Dashboard & Tracking</p>
+        <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'report_incident' %}" class="btn" style="background: #e74c3c; text-decoration: none;">🚨 Report Incident</a>
+            <a href="{% url 'my_incidents' %}" class="btn" style="background: #27ae60; text-decoration: none;">📋 My Reports</a>
+            <a href="{% url 'incident_tracking' %}" class="btn" style="background: #9b59b6; text-decoration: none;">📊 Track All</a>
+        </div>
     </div>
 
     <div class="stats">
