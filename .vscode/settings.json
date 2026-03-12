@@ -3,15 +3,20 @@
   "python.linting.pylintEnabled": false,
   "python.linting.flake8Enabled": true,
   "python.formatting.provider": "black",
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.extraPaths": ["${workspaceFolder}/campusshield"],
+  "python.analysis.venvPath": "${workspaceFolder}/venv_new",
   "[python]": {
     "editor.defaultFormatter": "ms-python.python",
     "editor.formatOnSave": true
   },
   "pylance.analysis.typeCheckingMode": "basic",
-  "python.analysis.extraPaths": ["${workspaceFolder}/campusshield"],
   "files.exclude": {
     "**/__pycache__": true,
     "**/*.pyc": true,
-    "**/.pytest_cache": true
+    "**/.pytest_cache": true,
+    "**/node_modules": true,
+    ".git": true
   }
 }
+
