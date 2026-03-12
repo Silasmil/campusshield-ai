@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusShield AI - Simple Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f4f4f4;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            flex: 1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .toolbar {
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #2980b9;
+        }
+        .filter-select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #bdc3c7;
+            margin-left: 10px;
+        }
+        .incident-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 5px solid #3498db;
+        }
+        .incident-card.critical { border-left-color: #e74c3c; }
+        .incident-card.high { border-left-color: #e67e22; }
+        .incident-card.medium { border-left-color: #f1c40f; }
+        .incident-card.low { border-left-color: #27ae60; }
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .incident-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+        .badge.anomaly { background: #9b59b6; }
+        .badge.high-risk { background: #e74c3c; }
+        .badge.medium-risk { background: #f39c12; }
+        .badge.low-risk { background: #27ae60; }
+        .badge.active { background: #e74c3c; }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .progress-fill {
+            height: 8px;
+            background: #3498db;
+            border-radius: 4px;
+            width: 0%;
+        }
+        .analysis-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .analysis-section button {
+            margin-right: 10px;
+        }
+        .status-message {
+            margin-left: 10px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ CampusShield AI</h1>
+        <p>Simple Cybersecurity Dashboard</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_incidents }}</div>
+            <div class="stat-label">Total Incidents</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ critical_incidents }}</div>
+            <div class="stat-label">Critical Active</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ avg_risk }}%</div>
+            <div class="stat-label">Average Risk</div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <button class="btn" onclick="trainModels()">🚀 Train AI Models</button>
+        <select class="filter-select" onchange="filterByType(this.value)">
+            <option value="all">All Types</option>
+            <option value="phishing">Phishing</option>
+            <option value="malware">Malware</option>
+            <option value="ddos">DDoS</option>
+            <option value="unauthorized_access">Unauthorized Access</option>
+            <option value="data_breach">Data Breach</option>
+            <option value="ransomware">Ransomware</option>
+            <option value="insider_threat">Insider Threat</option>
+        </select>
+        <span id="training-status" class="status-message"></span>
+    </div>
+
+    <div id="incidents-container">
+        {% for incident in incidents %}
+        <div class="incident-card 
+            {% if incident.severity <= 2 %}critical
+            {% elif incident.severity == 3 %}medium
+            {% else %}low{% endif %}"
+            data-type="{{ incident.incident_type }}">
+            <div class="incident-header">
+                <span class="incident-title">{{ incident.title }}</span>
+                <div>
+                    {% if incident.anomaly_score > 0.7 %}
+                        <span class="badge anomaly">🚨 AI Anomaly</span>
+                    {% endif %}
+                    {% if incident.risk_score > 0.7 %}
+                        <span class="badge high-risk">High Risk</span>
+                    {% elif incident.risk_score > 0.4 %}
+                        <span class="badge medium-risk">Medium Risk</span>
+                    {% else %}
+                        <span class="badge low-risk">Low Risk</span>
+                    {% endif %}
+                    {% if not incident.resolved %}
+                        <span class="badge active">● Active</span>
+                    {% endif %}
+                </div>
+            </div>
+            <p>{{ incident.description }}</p>
+            <div>
+                <small>Type: {{ incident.incident_type }} | Severity: {{ incident.severity }}/5</small>
+            </div>
+            <div class="analysis-section">
+                <div><strong>AI Analysis</strong></div>
+                <div>Anomaly Score: {{ incident.anomaly_score|floatformat:2 }}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {% widthratio incident.anomaly_score 1 100 %}%"></div>
+                </div>
+                <div>Risk Score: {{ incident.risk_score|floatformat:2 }}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {% widthratio incident.risk_score 1 100 %}%"></div>
+                </div>
+                <div style="margin-top:10px;">
+                    <button class="btn" onclick="analyzeIncident({{ incident.id }})">🔍 Run Analysis</button>
+                    <button class="btn" onclick="viewDetails({{ incident.id }})">📊 View Details</button>
+                    <span id="analysis-{{ incident.id }}" class="status-message"></span>
+                </div>
+            </div>
+            <div style="margin-top:10px; color:#7f8c8d; font-size:12px;">
+                Detected: {{ incident.detected_at|date:"Y-m-d H:i" }}
+            </div>
+        </div>
+        {% empty %}
+        <p>No incidents found.</p>
+        {% endfor %}
+    </div>
+
+    <script>
+        function analyzeIncident(id) {
+            const span = document.getElementById('analysis-'+id);
+            span.innerText = '⏳ Analyzing...';
+            fetch(`/api/incidents/${id}/analyze/`, {
+                method: 'POST',
+                headers: {'X-CSRFToken': getCookie('csrftoken')}
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    span.innerText = '❌ ' + data.error;
+                } else {
+                    span.innerText = '✅ Score: ' + data.anomaly_score.toFixed(2);
+                    setTimeout(() => location.reload(), 1000);
+                }
+            })
+            .catch(() => {
+                span.innerText = '❌ Failed';
+            });
+        }
+
+        function viewDetails(id) {
+            window.open(`/api/incidents/${id}/analysis/`, '_blank');
+        }
+
+        function trainModels() {
+            const status = document.getElementById('training-status');
+            status.innerText = '⏳ Training...';
+            fetch('/api/train-models/', {
+                method: 'POST',
+                headers: {'X-CSRFToken': getCookie('csrftoken')}
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    status.innerText = '❌ ' + data.error;
+                } else {
+                    status.innerText = '✅ Models trained!';
+                    setTimeout(() => location.reload(), 1000);
+                }
+            })
+            .catch(() => {
+                status.innerText = '❌ Failed';
+            });
+        }
+
+        function filterByType(type) {
+            const cards = document.querySelectorAll('.incident-card');
+            cards.forEach(card => {
+                if (type === 'all' || card.dataset.type === type) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>
